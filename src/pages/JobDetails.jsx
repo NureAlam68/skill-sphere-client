@@ -1,12 +1,15 @@
 import axios from 'axios'
-import { format } from 'date-fns'
-import { useEffect, useState } from 'react'
+import { compareAsc, format } from 'date-fns'
+import { useContext, useEffect, useState } from 'react'
 
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { useParams } from 'react-router-dom'
+import { AuthContext } from '../providers/AuthProvider'
+import toast from 'react-hot-toast'
 
 const JobDetails = () => {
+  const { user } = useContext(AuthContext)
   const {id} = useParams()
   const [startDate, setStartDate] = useState(new Date())
   const [job, setJob] = useState({});
@@ -19,10 +22,34 @@ const JobDetails = () => {
   const fetchJobData = async () => {
     const { data} = await axios.get(`${import.meta.env.VITE_API_URL}/job/${id}`)
     setJob(data)
-    setStartDate(new Date(data.deadline))
+    // setStartDate(new Date(data.deadline))
   }
 
-  const {title, category, min_price, max_price, description, deadline} = job
+  const {title, category, min_price, max_price, description, deadline, buyer} = job
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    const form = e.target
+    const price = form.price.value
+    const email = user?.email
+    const comment = form.comment.value
+
+     // 0. Check bid permissions validation
+     if (user?.email === buyer?.email)
+      return toast.error('Action not permitted!')
+
+     // 1. Deadline crossed validation
+    if (compareAsc(new Date(), new Date(deadline)) === 1)
+      return toast.error('Deadline Crossed, Bidding Forbidden!')
+
+     // 2. Price within maximum price range validation
+     if (price > max_price)
+      return toast.error('Offer less or at least equal to maximum price!')
+
+     // 3. offered deadline is within sellers deadline validation
+     if (compareAsc(new Date(startDate), new Date(deadline)) === 1)
+      return toast.error('Offer a date within deadline')
+  }
 
   return (
     <div className='flex flex-col md:flex-row justify-around gap-5  items-center min-h-[calc(100vh-306px)] md:max-w-screen-xl mx-auto '>
@@ -77,7 +104,7 @@ const JobDetails = () => {
           Place A Bid
         </h2>
 
-        <form>
+        <form onSubmit={handleSubmit}>
           <div className='grid grid-cols-1 gap-6 mt-4 sm:grid-cols-2'>
             <div>
               <label className='text-gray-700 ' htmlFor='price'>
@@ -100,6 +127,7 @@ const JobDetails = () => {
                 id='emailAddress'
                 type='email'
                 name='email'
+                defaultValue={user?.email}
                 disabled
                 className='block w-full px-4 py-2 mt-2 text-gray-700 bg-white border border-gray-200 rounded-md   focus:border-blue-400 focus:ring-blue-300 focus:ring-opacity-40  focus:outline-none focus:ring'
               />
