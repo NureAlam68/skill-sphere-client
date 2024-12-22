@@ -1,34 +1,30 @@
-import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../providers/AuthProvider";
 import { format } from "date-fns";
+import useAxiosSecure from "../hooks/useAxiosSecure";
 
 const MyBids = () => {
+  const axiosSecure = useAxiosSecure()
   const { user } = useContext(AuthContext);
   const [bids, setBids] = useState([]);
 
   useEffect(() => {
     fetchAllBids();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.email]);
+  }, [user]);
 
   const fetchAllBids = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_API_URL}/bids/${user?.email}`
-    );
-    setBids(data);
+    const { data } = await axiosSecure.get(`/bids/${user?.email}`)
+    setBids(data)
   };
 
   const handleStatusChange = async (id, prevStatus, status) => {
     if (prevStatus !== "In Progress") return console.log("Not Allowed");
 
     try {
-      const { data } = await axios.patch(
-        `${import.meta.env.VITE_API_URL}/bid-status-update/${id}`,
-        {
-          status,
-        }
-      );
+      const { data } = await axiosSecure.patch(`/bid-status-update/${id}`, {
+        status,
+      })
       console.log(data);
 
       // refresh ui

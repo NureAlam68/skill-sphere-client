@@ -1,32 +1,35 @@
 import { useContext, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AuthContext } from '../providers/AuthProvider'
-import axios from 'axios'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
+import useAxiosSecure from '../hooks/useAxiosSecure'
 
 const MyPostedJobs = () => {
+  const axiosSecure = useAxiosSecure()
   const { user } = useContext(AuthContext)
   const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
     fetchAllJobs()
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.email])
+  }, [user])
 
   const fetchAllJobs = async () => {
-    const { data} = await axios.get(`${import.meta.env.VITE_API_URL}/jobs/${user?.email}`)
+    const { data } = await axiosSecure.get(`/jobs/${user?.email}`)
     setJobs(data)
   }
 
-  // delete functionality
-  const handleDelete = async (id) => {
+   // delete functionality
+   const handleDelete = async id => {
     try {
-      await axios.delete(`${import.meta.env.VITE_API_URL}/job/${id}`)
-      toast.success('Job Deleted Successfully')
+      const { data } = await axiosSecure.delete(`/job/${id}`)
+      console.log(data)
+      toast.success('Data Deleted Successfully!!!')
       fetchAllJobs()
-    } catch (error) {
-      console.log(error)
+    } catch (err) {
+      console.log(err)
+      toast.error(err.message)
     }
   }
 

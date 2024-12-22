@@ -3,21 +3,21 @@ import { AuthContext } from "../providers/AuthProvider";
 import axios from "axios";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import useAxiosSecure from "../hooks/useAxiosSecure";
 
 const BidRequests = () => {
+  const axiosSecure = useAxiosSecure()
   const { user } = useContext(AuthContext);
   const [bids, setBids] = useState([]);
 
   useEffect(() => {
     fetchAllBids();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.email]);
+  }, [user]);
 
   const fetchAllBids = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_API_URL}/bids/${user?.email}?buyer=true`
-    );
-    setBids(data);
+    const { data } = await axiosSecure.get(`/bids/${user?.email}?buyer=true`)
+    setBids(data)
   };
 
   const handleStatusChange = async (id, prevStatus, status) => {
